@@ -129,10 +129,13 @@ Ion = 2.0
 nprime = 0.01  !particles/cm^3/min, real rate is nprime*multiplicity
 
 !Particle initial conditions:
-radius_init=2.0e-7
-radius_std=0.0
-kappas_init=1.2
-kappas_std=0.0
+radius_init=2.0e-7   !Initial wet radius (m); used if dry_diam_mean_nm <= 0
+radius_std=0.0       !Std dev of wet radius (m); used if dry_diam_mean_nm <= 0
+kappas_init=1.2      !Mean kappa
+kappas_std=0.0       !Std dev of kappa
+dry_diam_mean_nm=-1.0  !Set > 0 to use a dry aerosol lognormal for inewpart = 2
+dry_diam_gsd=1.6       !Geometric std dev of dry diameter distribution
+part_init_rh=95.0      !RH (%) used to hydrate dry aerosol to initial wet radius
 Tp_init = 290.0
 vp_init = 0.0, 0.0, 0.0
 /

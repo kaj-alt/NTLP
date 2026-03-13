@@ -1,0 +1,53 @@
+# build artifacts (compiler outputs)
+*.o
+*.mod
+*.a
+*.so
+*.dylib
+*.exe
+build/
+bin/
+
+# runtime/output data & scripts
+*.le.cou*      # LES/DNS output files
+part.le.cou*   # particle output files
+u.le.cou*      # velocity field outputs
+*.traj         # trajectory files
+*.hist         # history files
+*.viz          # visualization files
+
+# MATLAB generated files
+*.mat          # MATLAB data files
+*.fig          # MATLAB figures
+*.asv          # MATLAB autosave files
+*.m~           # MATLAB backup files
+
+# particle simulation data
+*_particles.dat
+*_field.dat
+*.particles
+*.field
+*.kdtree
+
+# big data formats that might sneak into the repo
+**/*.nc        # NetCDF output files
+**/*.h5        # HDF5 files
+**/*.parquet
+**/*.csv
+**/*.log
+*.tmp
+
+# repo internals
+.git/
+
+# test case outputs
+test_cases/**/*.out
+test_cases/**/*.log
+test_cases/**/output/
+
+# scratch directory outputs
+/scratch*/**
+
+# FFT temporary files
+*.fft
+*.spec

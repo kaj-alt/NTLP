@@ -1,0 +1,37 @@
+---
+description: NTLP safety guardrails (always on)
+globs:
+alwaysApply: true
+---
+
+# General Safety Rules
+- Only modify files I explicitly mention.
+- Never touch test case output directories or anything matched by .cursorignore.
+- Do not change numerics (schemes, physical constants, boundary conditions) unless I say so.
+- Keep Fortran 90/95 module interfaces intact; avoid mass reformatting/rewrapping lines.
+- If proposing refactors, present a short step-by-step PLAN first; wait for approval.
+- After edits, show a concise DIFF per file and print the build command (`make`).
+
+# Turbulence Model Safety Rules
+- Preserve numerical stability in DNS/LES schemes.
+- Do not modify FFT implementation without thorough testing.
+- Maintain conservation properties in turbulence closures.
+- Keep boundary condition treatments consistent in stretched grids.
+- Test changes in both DNS and LES modes.
+- Verify CFL conditions are properly maintained.
+
+# Particle Tracking Safety Rules
+- Preserve particle-flow coupling mechanisms.
+- Maintain accuracy in Lagrangian particle tracking algorithms.
+- Do not modify particle injection or removal logic without approval.
+- Keep kdtree neighbor search optimizations intact.
+- Verify mass/energy conservation in particle-flow interactions.
+- Test particle tracking in both uniform and stretched grids.
+- Preserve particle coalescence and evaporation physics.
+
+# Test Case Safety Rules
+- Test changes across multiple configurations (pi_chamber, channel, cfog).
+- Maintain parameter file compatibility across all test cases.
+- Preserve MATLAB postprocessing data formats.
+- Do not modify established physical constants without explicit approval.
+- Keep trajectory output formats compatible with visualization tools.

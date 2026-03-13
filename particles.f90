@@ -2277,7 +2277,7 @@ CONTAINS
   implicit none
 
   real :: xv,yv,zv,ran2,m_s
-  real :: kappas_dinit,radius_dinit
+  real :: kappas_dinit,radius_dinit,dry_rh_frac,dry_diam_um
   real :: xp_init(3)
   integer :: idx,procidx
 
@@ -2299,8 +2299,7 @@ CONTAINS
 
 
 
-   elseif (inewpart.eq.2) then  !Same as above, but with NORMAL distribution of radius and kappa given by radius_std and kappas_std
-                              !Use for Pi Chamber
+   elseif (inewpart.eq.2) then  !Pi Chamber: normal wet-radius or lognormal dry-diameter initialization
 
       xv = ran2(iseed)*(xmax-xmin) + xmin
       yv = ran2(iseed)*(ymax-ymin) + ymin
@@ -2308,13 +2307,23 @@ CONTAINS
       zv = zl/2.0   !Midplane of the Pi Chamber domain
       xp_init = (/xv,yv,zv/) 
 
-      ! Set distribution for initial radius
-      radius_dinit = abs(radius_std*sqrt(-2*log(ran2(iseed)))*cos(pi2*ran2(iseed)) + radius_init)
-
       ! Set distribution for kappa_s
       kappas_dinit = abs(kappas_std * sqrt(-2*log(ran2(iseed)))*cos(pi2*ran2(iseed)) + kappas_init)
-
-      m_s = radius_dinit**3*pi2*2.0/3.0*rhow*Sal  !Using the salinity specified in params.in
+      if (dry_diam_mean_nm.gt.0.0) then
+         dry_diam_um = max(1.0e-6,1.0e-3*dry_diam_mean_nm)
+         M = log(dry_diam_um)
+         if (dry_diam_gsd.gt.1.0) then
+            S = log(dry_diam_gsd)
+         else
+            S = 1.0e-6
+         end if
+         dry_rh_frac = min(0.999999,max(1.0e-6,0.01*part_init_rh))
+         call lognormal_dist(radius_dinit,m_s,kappas_dinit,M,S,dry_rh_frac)
+      else
+         ! Set distribution for initial wet radius
+         radius_dinit = abs(radius_std*sqrt(-2*log(ran2(iseed)))*cos(pi2*ran2(iseed)) + radius_init)
+         m_s = radius_dinit**3*pi2*2.0/3.0*rhow*Sal  !Using the salinity specified in params.in
+      end if
 
       call create_particle(xp_init,vp_init,Tp_init,m_s,kappas_dinit,mult_init,radius_dinit,ngidx,procidx)
 
@@ -2337,7 +2346,7 @@ CONTAINS
          mult = mult_a
 
          !With these parameters, get m_s and rad_init from distribution
-         call lognormal_dist(rad_init,m_s,kappa_s,M,S)
+         call lognormal_dist(rad_init,m_s,kappa_s,M,S,0.95)
 
       else  !It's coarse mode
 
@@ -2347,7 +2356,7 @@ CONTAINS
          mult = mult_c
 
          !With these parameters, get m_s and rad_init from distribution
-         call lognormal_dist(rad_init,m_s,kappa_s,M,S)
+         call lognormal_dist(rad_init,m_s,kappa_s,M,S,0.95)
 
       end if      
 
@@ -2361,7 +2370,7 @@ CONTAINS
          mult = mult_c
 
          !With these parameters, get m_s and rad_init from distribution
-         call lognormal_dist(rad_init,m_s,kappa_s,M,S)
+         call lognormal_dist(rad_init,m_s,kappa_s,M,S,0.95)
          xp_init(3) = 10.0
       end if
 
@@ -2385,7 +2394,7 @@ CONTAINS
          mult = mult_init
       
          !With these parameters, get m_s and rad_init from distribution
-         call lognormal_dist(rad_init,m_s,kappa_s,M,S)
+         call lognormal_dist(rad_init,m_s,kappa_s,M,S,0.95)
 
       else
 
@@ -2395,7 +2404,7 @@ CONTAINS
          mult = mult_init
 
          !With these parameters, get m_s and rad_init from distribution
-         call lognormal_dist(rad_init,m_s,kappa_s,M,S)
+         call lognormal_dist(rad_init,m_s,kappa_s,M,S,0.95)
       end if
        
       call create_particle(xp_init,vp_init,Tp_init,m_s,kappa_s,mult,rad_init,idx,procidx)
@@ -2417,7 +2426,7 @@ CONTAINS
          mult = mult_a
 
          !With these parameters, get m_s and rad_init from distribution
-         call lognormal_dist(rad_init,m_s,kappa_s,M,S)
+         call lognormal_dist(rad_init,m_s,kappa_s,M,S,0.95)
 
       else  !It's coarse mode
 
@@ -2427,7 +2436,7 @@ CONTAINS
          mult = mult_c
 
          !With these parameters, get m_s and rad_init from distribution
-         call lognormal_dist(rad_init,m_s,kappa_s,M,S)
+         call lognormal_dist(rad_init,m_s,kappa_s,M,S,0.95)
 
       end if
 
@@ -2440,7 +2449,7 @@ CONTAINS
          mult = mult_c
 
          !With these parameters, get m_s and rad_init from distribution
-         call lognormal_dist(rad_init,m_s,kappa_s,M,S)
+         call lognormal_dist(rad_init,m_s,kappa_s,M,S,0.95)
          xp_init(3) = 10.0
       end if
 
@@ -2451,7 +2460,7 @@ CONTAINS
 
   end subroutine new_particle
 
-  subroutine lognormal_dist(rad_init,m_s,kappa_s,M,S)
+  subroutine lognormal_dist(rad_init,m_s,kappa_s,M,S,rh_frac)
   use pars
   use con_data
   implicit none
@@ -2459,7 +2468,7 @@ CONTAINS
 
   real, intent(inout) :: rad_init,m_s,kappa_s
   real :: ran2,cdf_func_single
-  real :: M,S
+  real :: M,S,rh_frac
   real :: d1,d2,err,dhalf,ftest,CDF
   real :: daerosol
   real :: a(4), rtr(3), rti(3)
@@ -2500,10 +2509,10 @@ CONTAINS
 
   !Now have the dry aerosol diameter and mass, must rehydrate it using Kohler
   !theory to get the proper initial condition
-  !Rehydrate to 95% RH
+  !Rehydrate to the requested RH
 
   !The equation for the equilibrium radius is a cubic:
-   a(4) = log(0.95)  !RH = 95%
+   a(4) = log(min(0.999999,max(1.0e-6,rh_frac)))
    a(3) = -2.0*Mw*Gam/Ru/rhow/Tp_init
    a(2) = 0.0
    a(1) = kappa_s*m_s / (2.0/3.0*pi2*rhos)
@@ -2785,7 +2794,7 @@ CONTAINS
                num_destroy = num_destroy + 1
    
                !With these parameters, get m_s and rad_init from distribution
-               call lognormal_dist(rad_init,m_s,kappa_s,M,S)
+               call lognormal_dist(rad_init,m_s,kappa_s,M,S,0.95)
 
                call create_particle(xp_init,vp_init,Tp_init,m_s,kappa_s,mult,rad_init,idx_old,procidx_old)
 

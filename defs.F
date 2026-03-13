@@ -31,6 +31,7 @@ c
       real :: ugcont,vgcont,zo,zos,surf_RH,surf_p,surf_rho
       real :: meanRH,varRH
       real :: nprime
+      real :: dry_diam_mean_nm,dry_diam_gsd,part_init_rh
       real :: dvdr,hurr_rad
       integer :: isfc(nscl)
       real :: viz_t_elapsed
