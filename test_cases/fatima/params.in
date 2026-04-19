@@ -30,7 +30,7 @@ icoalesce=0
 ikernel = 1 ! kernel for coalescence; 0 = Golovin; 1 = Geometric kernel with collection efficiencies E=1; 2 = Long kernel; 3 = Geometric kernel with modified Hall collection efficiencies (as in Bott 1998); 4 = Geometric kernel with turbulence-enhanced Hall efficiencies (Wang and Grabowski 2009) (NOT YET)
 ipart_method=2   !1 = same RK3 as flow, 2 = backward Euler
 ipartdiff = 1
-inewpart = 6  !1 = new particles have initial conditions defined below, random location in domain; 2 = same, but normal distributions of radius and kappa_s, given by radius_std and kappas_std; 3 = special setup for C-FOG and double lognormal of different type; 4 = crude sea spray setup; 5 = Sc (preliminary); 6 = FATIMA
+inewpart = 6  !1 = random particle placement in the domain; 2 = Pi-chamber placement at the midplane; 3 = special setup for C-FOG and double lognormal of different type; 4 = crude sea spray setup; 5 = Sc (preliminary); 6 = FATIMA
 icase = 6  !Special additions for certain cases. 3 = setup for C-FOG, 4 = steady state LES sea spray setup, 5 = Sc (preliminary), 6 = setup for FATIMA
 isfs = 2   !isfs=1 is simple random walk, isfs=2 is Weil et al. (2004) particle subgrid
 iexner = 1  !iexner = 1 applies a correction to part%Tf to account for conversion b/w potential temp and temp. (need in PBL)

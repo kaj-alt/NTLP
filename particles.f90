@@ -1810,7 +1810,7 @@ CONTAINS
 
       do idx=1,numpart
 
-         ! Call new_particle, which creates a new particle basd on some strategy dictated by inewpart
+         ! Call new_particle, which creates a new particle based on the placement strategy in inewpart
          call new_particle(idx,myid)
 
 
