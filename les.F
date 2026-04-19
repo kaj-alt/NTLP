@@ -10628,11 +10628,15 @@ c
          if (ichamber_idealgas.eq.1) then
             rho_top = surf_p/Rd/max(Ttop(1),1.0e-6)
             rho_bot = surf_p/Rd/max(Tbot(1),1.0e-6)
-            Ttop(2) = RHT/100.0*Mw/Ru/Ttop(1)*mod_magnus(Ttop(1))/rho_top
-            Tbot(2) = RHB/100.0*Mw/Ru/Tbot(1)*mod_magnus(Tbot(1))/rho_bot
+            Ttop(2) = RHT/100.0*Mw/Ru/Ttop(1)
+     +                 *mod_magnus(Ttop(1))/rho_top
+            Tbot(2) = RHB/100.0*Mw/Ru/Tbot(1)
+     +                 *mod_magnus(Tbot(1))/rho_bot
          else
-            Ttop(2) = RHT/100.0*Mw/Ru/Ttop(1)*mod_magnus(Ttop(1))/surf_rho
-            Tbot(2) = RHB/100.0*Mw/Ru/Tbot(1)*mod_magnus(Tbot(1))/surf_rho
+            Ttop(2) = RHT/100.0*Mw/Ru/Ttop(1)
+     +                 *mod_magnus(Ttop(1))/surf_rho
+            Tbot(2) = RHB/100.0*Mw/Ru/Tbot(1)
+     +                 *mod_magnus(Tbot(1))/surf_rho
          end if
 
          if (myid==0) then
@@ -10645,9 +10649,11 @@ c
 
          if (ichamber_idealgas.eq.1) then
             rho_sfc = surf_p/Rd/max(tsfcc(1),1.0e-6)
-            tsfcc(2)=RHB/100.0*Mw/Ru/tsfcc(1)*mod_magnus(tsfcc(1))/rho_sfc
+            tsfcc(2)=RHB/100.0*Mw/Ru/tsfcc(1)
+     +                *mod_magnus(tsfcc(1))/rho_sfc
          else
-            tsfcc(2)=RHB/100.0*Mw/Ru/tsfcc(1)*mod_magnus(tsfcc(1))/surf_rho
+            tsfcc(2)=RHB/100.0*Mw/Ru/tsfcc(1)
+     +                *mod_magnus(tsfcc(1))/surf_rho
          end if
 
          if (myid==0) then
@@ -10750,7 +10756,8 @@ c
      +         method,idebug,iz_space,ivis0,ifix_dt,new_vis,iDNS,
      +         icouple,iTcouple,iHcouple,ievap,ifields,irestart,ilin,
      +         ineighbor,icoalesce,ipart_method,inewpart,icase,
-     +         ipartdiff,isfs,iexner,ipartsize,ichamber_idealgas,ilongwave,ihurr,
+     +         ipartdiff,isfs,iexner,ipartsize,ichamber_idealgas,
+     +         ilongwave,ihurr,
      +         inetcdf,iviznetcdf,ihumiditycontrol,ireintro,
      +         itrajout, ikernel
 
@@ -10759,7 +10766,8 @@ c
      +         tnumpart,mult_init,rhow,part_grav,rhos,
      +         Cpp,Mw,Ms,Ru,Gam,Ion,Sal,Rd,
      +         radius_init,radius_std,kappas_init,kappas_std,
-     +         dry_diam_mean_nm,dry_diam_std_nm,dry_diam_gsd,part_init_rh,
+     +         dry_diam_mean_nm,dry_diam_std_nm,dry_diam_gsd,
+     +         part_init_rh,
      +         grav, t00,fcor,zo,zos,
      +         vp_init,Tp_init,nprime,part_inject_time
 
@@ -10794,7 +10802,8 @@ c
 
       if (iexner.eq.1 .and. ichamber_idealgas.eq.1) then
          if (myid.eq.0) then
-            write(*,*) 'ERROR: choose either iexner=1 or ichamber_idealgas=1'
+            write(*,*) 'ERROR: choose either iexner=1 or'
+     +                  ' ichamber_idealgas=1'
          end if
          stop
       end if
@@ -10808,7 +10817,8 @@ c
 
       if (ipartsize.ge.1 .and. dry_diam_mean_nm.le.0.0) then
          if (myid.eq.0) then
-            write(*,*) 'ERROR: dry_diam_mean_nm must be > 0 when ipartsize >= 1'
+            write(*,*) 'ERROR: dry_diam_mean_nm must be > 0'
+     +                  ,' when ipartsize >= 1'
          end if
          stop
       end if
