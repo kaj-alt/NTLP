@@ -10750,7 +10750,7 @@ c
      +         method,idebug,iz_space,ivis0,ifix_dt,new_vis,iDNS,
      +         icouple,iTcouple,iHcouple,ievap,ifields,irestart,ilin,
      +         ineighbor,icoalesce,ipart_method,inewpart,icase,
-     +         ipartdiff,isfs,iexner,ichamber_idealgas,ilongwave,ihurr,
+     +         ipartdiff,isfs,iexner,ipartsize,ichamber_idealgas,ilongwave,ihurr,
      +         inetcdf,iviznetcdf,ihumiditycontrol,ireintro,
      +         itrajout, ikernel
 
@@ -10759,7 +10759,7 @@ c
      +         tnumpart,mult_init,rhow,part_grav,rhos,
      +         Cpp,Mw,Ms,Ru,Gam,Ion,Sal,Rd,
      +         radius_init,radius_std,kappas_init,kappas_std,
-     +         dry_diam_mean_nm,dry_diam_gsd,part_init_rh,
+     +         dry_diam_mean_nm,dry_diam_std_nm,dry_diam_gsd,part_init_rh,
      +         grav, t00,fcor,zo,zos,
      +         vp_init,Tp_init,nprime,part_inject_time
 
@@ -10767,9 +10767,11 @@ c
       !params.in contains namelists to read
       !open(12, file="./params.in", status="old")
       dry_diam_mean_nm = -1.0
+      dry_diam_std_nm = 0.0
       dry_diam_gsd = 0.0
       part_init_rh = 95.0
       part_inject_time = 0.0
+      ipartsize = -1
       ichamber_idealgas = 0
       call get_command_argument(1,params_dir)
       open(12,file=params_dir,status="old")
@@ -10793,6 +10795,20 @@ c
       if (iexner.eq.1 .and. ichamber_idealgas.eq.1) then
          if (myid.eq.0) then
             write(*,*) 'ERROR: choose either iexner=1 or ichamber_idealgas=1'
+         end if
+         stop
+      end if
+
+      if (ipartsize.lt.-1 .or. ipartsize.gt.3) then
+         if (myid.eq.0) then
+            write(*,*) 'ERROR: ipartsize must be -1, 0, 1, 2, or 3'
+         end if
+         stop
+      end if
+
+      if (ipartsize.ge.1 .and. dry_diam_mean_nm.le.0.0) then
+         if (myid.eq.0) then
+            write(*,*) 'ERROR: dry_diam_mean_nm must be > 0 when ipartsize >= 1'
          end if
          stop
       end if

@@ -9,7 +9,7 @@ c     ----------------------------------------------------------------------
      +     iupwnd,ibuoy,ifilt,itcut,isubs,ibrcl,iocean,method,
      +     idebug,iz_space,ivis0,ifix_dt,new_vis,iDNS,
      +     icouple,iTcouple,iHcouple,ievap,ifields,ilin,ineighbor,
-     +     icoalesce,ipart_method,ipartdiff,isfs,iexner,
+     +     icoalesce,ipart_method,ipartdiff,isfs,iexner,ipartsize,
      +     ichamber_idealgas,ilongwave,
      +     inetcdf,iviznetcdf,ihumiditycontrol,ireintro,itrajout,
      +     inewpart,ihurr,icase,ikernel,irestart
@@ -32,7 +32,7 @@ c
       real :: ugcont,vgcont,zo,zos,surf_RH,surf_p,surf_rho
       real :: meanRH,varRH
       real :: nprime,part_inject_time
-      real :: dry_diam_mean_nm,dry_diam_gsd,part_init_rh
+      real :: dry_diam_mean_nm,dry_diam_std_nm,dry_diam_gsd,part_init_rh
       real :: dvdr,hurr_rad
       integer :: isfc(nscl)
       real :: viz_t_elapsed

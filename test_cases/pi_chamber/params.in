@@ -33,6 +33,7 @@ inewpart = 2  !1 = new particles have initial conditions defined below, random l
 icase = 1  !Special additions for certain cases. 0 = particles reflected at lower surface, 3 = setup for C-FOG, 4 = steady state LES sea spray setup
 isfs = 2   !isfs=1 is simple random walk, isfs=2 is Weil et al. (2004) particle subgrid
 iexner = 0  !iexner = 1 applies a correction to part%Tf to account for conversion b/w potential temp and temp. (need in PBL)
+ipartsize = 0  !-1=legacy auto, 0=legacy wet radius, 1=monodisperse dry, 2=normal dry, 3=lognormal dry
 ichamber_idealgas = 0  !0 = legacy constant-density chamber thermo, 1 = constant-pressure ideal-gas thermo
 ilongwave = 0   !Use simple longwave radiation scheme when clouds/fog present
 inetcdf = 1  !Set to 1 to output history and histogram data to netcdf format, otherwise original binary format
@@ -131,13 +132,14 @@ nprime = 0.01  !particles/cm^3/min, real rate is nprime*multiplicity
 part_inject_time = 0.0  !Delay Pi-chamber particle injection until this model time (s)
 
 !Particle initial conditions:
-radius_init=2.0e-7   !Initial wet radius (m); used if dry_diam_mean_nm <= 0
-radius_std=0.0       !Std dev of wet radius (m); used if dry_diam_mean_nm <= 0
+radius_init=2.0e-7   !Legacy initial wet radius (m); used only if ipartsize = 0
+radius_std=0.0       !Legacy wet-radius std dev (m); used only if ipartsize = 0 and inewpart = 2
 kappas_init=1.2      !Mean kappa
 kappas_std=0.0       !Std dev of kappa
-dry_diam_mean_nm=-1.0  !Set > 0 to use a dry aerosol lognormal for inewpart = 2
-dry_diam_gsd=1.6       !Geometric std dev of dry diameter distribution
-part_init_rh=95.0      !RH (%) used to hydrate dry aerosol to initial wet radius
+dry_diam_mean_nm=-1.0  !Dry aerosol mean diameter (nm); used when ipartsize = 1,2,3
+dry_diam_std_nm=0.0    !Dry aerosol std dev (nm); used when ipartsize = 2
+dry_diam_gsd=1.6       !Dry aerosol geometric std dev; used when ipartsize = 3
+part_init_rh=95.0      !RH (%) used to hydrate dry aerosol to initial wet radius when ipartsize >= 1
 Tp_init = 290.0
 vp_init = 0.0, 0.0, 0.0
 /

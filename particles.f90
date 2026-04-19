@@ -2279,7 +2279,7 @@ CONTAINS
   implicit none
 
   real :: xv,yv,zv,ran2,m_s
-  real :: kappas_dinit,radius_dinit,dry_rh_frac,dry_diam_um
+  real :: kappas_dinit,radius_dinit
   real :: xp_init(3)
   integer :: idx,procidx
 
@@ -2294,14 +2294,14 @@ CONTAINS
       zv = ran2(iseed)*zl
       xp_init = (/xv,yv,zv/) 
 
-      m_s = radius_init**3*pi2*2.0/3.0*rhow*Sal  !Using the salinity specified in params.in
+      call init_general_particle_size(radius_dinit,m_s,kappas_dinit,.false.,ipartsize.ge.1)
 
-      call create_particle(xp_init,vp_init,Tp_init,m_s,kappas_init,mult_init,radius_init,ngidx,procidx)
-
-
+      call create_particle(xp_init,vp_init,Tp_init,m_s,kappas_dinit,mult_init,radius_dinit,ngidx,procidx)
 
 
-   elseif (inewpart.eq.2) then  !Pi Chamber: normal wet-radius or lognormal dry-diameter initialization
+
+
+   elseif (inewpart.eq.2) then  !Pi Chamber placement; size distribution set by ipartsize
 
       xv = ran2(iseed)*(xmax-xmin) + xmin
       yv = ran2(iseed)*(ymax-ymin) + ymin
@@ -2309,24 +2309,7 @@ CONTAINS
       zv = zl/2.0   !Midplane of the Pi Chamber domain
       xp_init = (/xv,yv,zv/) 
 
-      ! Set distribution for kappa_s
-      kappas_dinit = abs(kappas_std * sqrt(-2*log(ran2(iseed)))*cos(pi2*ran2(iseed)) + kappas_init)
-      if (dry_diam_mean_nm.gt.0.0) then
-         dry_diam_um = max(1.0e-6,1.0e-3*dry_diam_mean_nm)
-         M = log(dry_diam_um)
-         if (dry_diam_gsd.gt.1.0) then
-            S = log(dry_diam_gsd)
-            
-         else
-            S = 1.0e-6
-         end if
-         dry_rh_frac = min(0.999999,max(1.0e-6,0.01*part_init_rh))
-         call lognormal_dist(radius_dinit,m_s,kappas_dinit,M,S,dry_rh_frac)
-      else
-         ! Set distribution for initial wet radius
-         radius_dinit = abs(radius_std*sqrt(-2*log(ran2(iseed)))*cos(pi2*ran2(iseed)) + radius_init)
-         m_s = radius_dinit**3*pi2*2.0/3.0*rhow*Sal  !Using the salinity specified in params.in
-      end if
+      call init_general_particle_size(radius_dinit,m_s,kappas_dinit,.true.,.true.)
 
       call create_particle(xp_init,vp_init,Tp_init,m_s,kappas_dinit,mult_init,radius_dinit,ngidx,procidx)
 
@@ -2463,6 +2446,97 @@ CONTAINS
 
   end subroutine new_particle
 
+  subroutine init_general_particle_size(rad_init,m_s,kappa_s,use_wet_normal,sample_kappa)
+  use pars
+  use con_data
+  implicit none
+
+  real, intent(out) :: rad_init,m_s,kappa_s
+  logical, intent(in) :: use_wet_normal,sample_kappa
+
+  integer :: ipartsize_eff
+  real :: ran2,gauss_sample,dry_diam_nm,dry_diam_um,dry_rh_frac
+  real :: M,S
+
+  if (sample_kappa) then
+     gauss_sample = sqrt(-2*log(ran2(iseed)))*cos(pi2*ran2(iseed))
+     kappa_s = abs(kappas_std*gauss_sample + kappas_init)
+  else
+     kappa_s = kappas_init
+  end if
+
+  ipartsize_eff = ipartsize
+  if (ipartsize_eff.lt.0) then
+     if (use_wet_normal .and. dry_diam_mean_nm.gt.0.0) then
+        ipartsize_eff = 3
+     else
+        ipartsize_eff = 0
+     end if
+  end if
+
+  dry_rh_frac = min(0.999999,max(1.0e-6,0.01*part_init_rh))
+
+  if (ipartsize_eff.eq.0) then
+     if (use_wet_normal) then
+        gauss_sample = sqrt(-2*log(ran2(iseed)))*cos(pi2*ran2(iseed))
+        rad_init = abs(radius_std*gauss_sample + radius_init)
+     else
+        rad_init = radius_init
+     end if
+     m_s = rad_init**3*pi2*2.0/3.0*rhow*Sal
+  elseif (ipartsize_eff.eq.1) then
+     dry_diam_nm = max(1.0e-6,dry_diam_mean_nm)
+     dry_diam_um = 1.0e-3*dry_diam_nm
+     call dry_diam_to_wet(rad_init,m_s,kappa_s,dry_diam_um,dry_rh_frac)
+  elseif (ipartsize_eff.eq.2) then
+     gauss_sample = sqrt(-2*log(ran2(iseed)))*cos(pi2*ran2(iseed))
+     dry_diam_nm = max(1.0e-6,dry_diam_mean_nm + dry_diam_std_nm*gauss_sample)
+     dry_diam_um = 1.0e-3*dry_diam_nm
+     call dry_diam_to_wet(rad_init,m_s,kappa_s,dry_diam_um,dry_rh_frac)
+  elseif (ipartsize_eff.eq.3) then
+     dry_diam_um = max(1.0e-6,1.0e-3*dry_diam_mean_nm)
+     M = log(dry_diam_um)
+     if (dry_diam_gsd.gt.1.0) then
+        S = log(dry_diam_gsd)
+     else
+        S = 1.0e-6
+     end if
+     call lognormal_dist(rad_init,m_s,kappa_s,M,S,dry_rh_frac)
+  end if
+
+  end subroutine init_general_particle_size
+
+  subroutine dry_diam_to_wet(rad_init,m_s,kappa_s,dry_diam_um,rh_frac)
+  use pars
+  use con_data
+  implicit none
+  include 'mpif.h'
+
+  real, intent(out) :: rad_init,m_s
+  real, intent(in) :: kappa_s,dry_diam_um,rh_frac
+
+  real :: daerosol
+  real :: a(4), rtr(3), rti(3)
+  integer :: k
+
+  daerosol = max(1.0e-6,dry_diam_um)*1.0e-6
+  m_s = 2.0/3.0*pi2*(daerosol/2.0)**3*rhos
+
+  a(4) = log(min(0.999999,max(1.0e-6,rh_frac)))
+  a(3) = -2.0*Mw*Gam/Ru/rhow/Tp_init
+  a(2) = 0.0
+  a(1) = kappa_s*m_s / (2.0/3.0*pi2*rhos)
+  call eigen_roots(a,3,rtr,rti)
+  do k=1,3
+    if(rti(k).eq.0.) then
+       if(rtr(k).gt.0.)then
+          rad_init = rtr(k)
+       endif
+    endif
+  enddo
+
+  end subroutine dry_diam_to_wet
+
   subroutine lognormal_dist(rad_init,m_s,kappa_s,M,S,rh_frac)
   use pars
   use con_data
@@ -2473,9 +2547,7 @@ CONTAINS
   real :: ran2,cdf_func_single
   real :: M,S,rh_frac
   real :: d1,d2,err,dhalf,ftest,CDF
-  real :: daerosol
-  real :: a(4), rtr(3), rti(3)
-  integer :: iter, k
+  integer :: iter
 
   !Use bisection to get the radius based on the CDF contained in
   !function cdf_func
@@ -2507,32 +2579,7 @@ CONTAINS
 
   end do
 
-  daerosol = d1*1.0e-6  !Don't forget to convert micron to m
-  m_s = 2.0/3.0*pi2*(daerosol/2.0)**3*rhos
-
-  !Now have the dry aerosol diameter and mass, must rehydrate it using Kohler
-  !theory to get the proper initial condition
-  !Rehydrate to the requested RH
-
-  !The equation for the equilibrium radius is a cubic:
-   a(4) = log(min(0.999999,max(1.0e-6,rh_frac)))
-   a(3) = -2.0*Mw*Gam/Ru/rhow/Tp_init
-   a(2) = 0.0
-   a(1) = kappa_s*m_s / (2.0/3.0*pi2*rhos)
-   ! calculate all roots of the cubic equation (real and complex)
-   !The method is to construct an upper Hessenberg matrix
-   !whose eigenvalues are the desired roots, and then use the
-   !routines balanc and hqr . The real and imaginary parts of the
-   !roots are returned in rtr(1:m) and rti(1:m) , respectively.
-   call eigen_roots(a,3,rtr,rti)
-   !now select the real and positive one
-   do k=1,3
-     if(rti(k).eq.0.) then
-        if(rtr(k).gt.0.)then
-           rad_init = rtr(k)
-        endif
-     endif
-   enddo
+  call dry_diam_to_wet(rad_init,m_s,kappa_s,d1,rh_frac)
 
   end subroutine lognormal_dist
 
