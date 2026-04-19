@@ -10802,8 +10802,7 @@ c
 
       if (iexner.eq.1 .and. ichamber_idealgas.eq.1) then
          if (myid.eq.0) then
-            write(*,*) 'ERROR: choose either iexner=1 or'
-     +                  ' ichamber_idealgas=1'
+            write(*,*) 'ERROR: only one of iexner/ichamber_idealgas'
          end if
          stop
       end if
