@@ -400,6 +400,20 @@ real :: Ttmp,mod_magnus,exner,func_p_base,rhoa,func_rho_base
   end do
   end do
 
+  elseif (ichamber_idealgas .eq. 1) then
+
+  do iz=kmin,kmax
+  do iy=jmin,jmax
+  do ix=1,nnx
+
+     Ttmp = tplt(ix,iy,iz)
+     rhoa = surf_p/Rd/max(Ttmp,1.0e-6)
+     rhplt(ix,iy,iz) = Ttmp*qplt(ix,iy,iz)*Ru/Mw/mod_magnus(Ttmp)*rhoa*100.0
+
+  end do
+  end do
+  end do
+
   else
 
   do iz=kmin,kmax

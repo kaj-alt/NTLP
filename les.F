@@ -7421,6 +7421,9 @@ c
      +      exner(surf_p,func_p_base(surf_p,tsfcc(1),zz(iz)))
             !rhoa = func_rho_base(surf_p,tsfcc(1),zz(iz))
 	    rhoa = func_p_base(surf_p,tsfcc(1),zz(iz))/Rd/Ttmp
+         elseif (ichamber_idealgas .eq. 1) then
+            Ttmp = t(ix,iy,1,iz)
+            rhoa = surf_p/Rd/max(Ttmp,1.0e-6)
          else
             Ttmp = t(ix,iy,1,iz)
             rhoa = surf_rho
@@ -10496,6 +10499,8 @@ c
      +      exner(surf_p,func_p_base(surf_p,tsfcc(1),zz(iz)))
             !rhoa = func_rho_base(surf_p,tsfcc(1),zz(iz))
 	    rhoa = func_p_base(surf_p,tsfcc(1),zz(iz))/Rd/txym(iz,1)
+         elseif (ichamber_idealgas.eq.1) then
+            rhoa = surf_p/Rd/max(txym(iz,1),1.0e-6)
          else
             rhoa = surf_rho
          end if
@@ -10544,6 +10549,8 @@ c
      +      exner(surf_p,func_p_base(surf_p,tsfcc(1),zz(iz)))
             !rhoa = func_rho_base(surf_p,tsfcc(1),zz(iz))
 	    rhoa = func_p_base(surf_p,tsfcc(1),zz(iz))/Rd/txym(iz,1)
+         elseif (ichamber_idealgas.eq.1) then
+            rhoa = surf_p/Rd/max(txym(iz,1),1.0e-6)
          else
             rhoa = surf_rho
          end if
@@ -10609,7 +10616,7 @@ c
       use pars
       use con_data
       implicit none
-      real :: RHB,RHT,mod_magnus
+      real :: RHB,RHT,mod_magnus,rho_top,rho_bot,rho_sfc
 
       !Assuming tsfcc(2),Ttop(2),Tbot(2) in params.in are giving RH:
       if (iDNS .eq. 1) then
@@ -10618,8 +10625,15 @@ c
          RHB = Tbot(2)
 
          !Convert RH given in input file into specific humidity
-         Ttop(2) = RHT/100.0*Mw/Ru/Ttop(1)*mod_magnus(Ttop(1))/surf_rho
-         Tbot(2) = RHB/100.0*Mw/Ru/Tbot(1)*mod_magnus(Tbot(1))/surf_rho
+         if (ichamber_idealgas.eq.1) then
+            rho_top = surf_p/Rd/max(Ttop(1),1.0e-6)
+            rho_bot = surf_p/Rd/max(Tbot(1),1.0e-6)
+            Ttop(2) = RHT/100.0*Mw/Ru/Ttop(1)*mod_magnus(Ttop(1))/rho_top
+            Tbot(2) = RHB/100.0*Mw/Ru/Tbot(1)*mod_magnus(Tbot(1))/rho_bot
+         else
+            Ttop(2) = RHT/100.0*Mw/Ru/Ttop(1)*mod_magnus(Ttop(1))/surf_rho
+            Tbot(2) = RHB/100.0*Mw/Ru/Tbot(1)*mod_magnus(Tbot(1))/surf_rho
+         end if
 
          if (myid==0) then
            write(*,*) 'SURFACE HUMIDITY: %RH, q = ',RHB,Tbot(2)
@@ -10629,7 +10643,12 @@ c
 
          RHB = tsfcc(2)
 
-         tsfcc(2)=RHB/100.0*Mw/Ru/tsfcc(1)*mod_magnus(tsfcc(1))/surf_rho
+         if (ichamber_idealgas.eq.1) then
+            rho_sfc = surf_p/Rd/max(tsfcc(1),1.0e-6)
+            tsfcc(2)=RHB/100.0*Mw/Ru/tsfcc(1)*mod_magnus(tsfcc(1))/rho_sfc
+         else
+            tsfcc(2)=RHB/100.0*Mw/Ru/tsfcc(1)*mod_magnus(tsfcc(1))/surf_rho
+         end if
 
          if (myid==0) then
            write(*,*) 'SURFACE HUMIDITY: %RH, q = ',RHB,tsfcc(2)
@@ -10688,6 +10707,13 @@ c
             p_base(iz) = func_p_base(surf_p,T_surf,zz(iz))
             rho_base(iz)=func_rho_base(surf_p,T_surf,zz(iz))
          end do
+      elseif (ichamber_idealgas.eq.1) then
+         !Keep the Boussinesq reference temperature, but use an ideal-gas
+         !reference density at constant chamber pressure for thermodynamics.
+         theta_base = t00
+         T_base = t00
+         p_base = surf_p
+         rho_base = surf_p/Rd/max(t00,1.0e-6)
       else
          !Set entire arrays to constants
          theta_base = t00
@@ -10724,7 +10750,7 @@ c
      +         method,idebug,iz_space,ivis0,ifix_dt,new_vis,iDNS,
      +         icouple,iTcouple,iHcouple,ievap,ifields,irestart,ilin,
      +         ineighbor,icoalesce,ipart_method,inewpart,icase,
-     +         ipartdiff,isfs,iexner,ilongwave,ihurr,
+     +         ipartdiff,isfs,iexner,ichamber_idealgas,ilongwave,ihurr,
      +         inetcdf,iviznetcdf,ihumiditycontrol,ireintro,
      +         itrajout, ikernel
 
@@ -10743,6 +10769,7 @@ c
       dry_diam_mean_nm = -1.0
       dry_diam_gsd = 0.0
       part_init_rh = 95.0
+      ichamber_idealgas = 0
       call get_command_argument(1,params_dir)
       open(12,file=params_dir,status="old")
 
@@ -10761,6 +10788,13 @@ c
       read(12,nml=constants)
       if (myid==0) print constants
       CpaCpp = Cpa/Cpp
+
+      if (iexner.eq.1 .and. ichamber_idealgas.eq.1) then
+         if (myid.eq.0) then
+            write(*,*) 'ERROR: choose either iexner=1 or ichamber_idealgas=1'
+         end if
+         stop
+      end if
 
 
 

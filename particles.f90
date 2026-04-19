@@ -1209,6 +1209,8 @@ CONTAINS
      if (iexner.eq.1) then
         !rhoa = func_rho_base(surf_p,tsfcc(1),part%xp(3))
         rhoa = func_p_base(surf_p,tsfcc(1),part%xp(3))/Rd/part%Tf  !part%Tf has already been converted to temp from pot. temp
+     elseif (ichamber_idealgas.eq.1) then
+        rhoa = surf_p/Rd/max(part%Tf,1.0e-6)
      else
         rhoa = surf_rho
      end if
@@ -1293,7 +1295,7 @@ CONTAINS
       do ix=1,nnx
 
        if (iTcouple.eq.1) then
-          if (iexner) then
+          if (iexner.eq.1) then
              t(ix,iy,1,iz) = t(ix,iy,1,iz) + dt*(partTsrc(ix,iy,iz)/exner(surf_p,func_p_base(surf_p,tsfcc(1),zz(iz))))
           else
              t(ix,iy,1,iz) = t(ix,iy,1,iz) + dt*partTsrc(ix,iy,iz)
@@ -2314,6 +2316,7 @@ CONTAINS
          M = log(dry_diam_um)
          if (dry_diam_gsd.gt.1.0) then
             S = log(dry_diam_gsd)
+            
          else
             S = 1.0e-6
          end if
@@ -2907,6 +2910,8 @@ CONTAINS
              part%Tf = part%Tf*exner(surf_p,func_p_base(surf_p,tsfcc(1),part%xp(3)))
              !rhoa = func_rho_base(surf_p,tsfcc(1),part%xp(3))
              rhoa = func_p_base(surf_p,tsfcc(1),part%xp(3))/Rd/part%Tf
+        elseif (ichamber_idealgas .eq. 1) then
+            rhoa = surf_p/Rd/max(part%Tf,1.0e-6)
          else
              rhoa = surf_rho
          end if
@@ -3076,6 +3081,8 @@ CONTAINS
            part%Tf = part%Tf*exner(surf_p,func_p_base(surf_p,tsfcc(1),part%xp(3)))
            !rhoa = func_rho_base(surf_p,tsfcc(1),part%xp(3))
            rhoa = func_p_base(surf_p,tsfcc(1),part%xp(3))/Rd/part%Tf
+        elseif (ichamber_idealgas .eq. 1) then
+           rhoa = surf_p/Rd/max(part%Tf,1.0e-6)
         else
            rhoa = surf_rho
         end if
@@ -3697,6 +3704,9 @@ CONTAINS
             Ttmp = txym(iz,1)*exner(surf_p,func_p_base(surf_p,tsfcc(1),zz(iz)))
             !rhoa = func_rho_base(surf_p,tsfcc(1),zz(iz))
 	    rhoa = func_p_base(surf_p,tsfcc(1),zz(iz))/Rd/Ttmp
+        elseif (ichamber_idealgas .eq. 1) then
+            Ttmp = txym(iz,1)
+            rhoa = surf_p/Rd/max(Ttmp,1.0e-6)
         else
            rhoa = surf_rho
         end if
