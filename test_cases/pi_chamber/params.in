@@ -128,6 +128,7 @@ Gam = 7.28e-2
 Ion = 2.0
 
 nprime = 0.01  !particles/cm^3/min, real rate is nprime*multiplicity
+part_inject_time = 0.0  !Delay Pi-chamber particle injection until this model time (s)
 
 !Particle initial conditions:
 radius_init=2.0e-7   !Initial wet radius (m); used if dry_diam_mean_nm <= 0

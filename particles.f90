@@ -2171,7 +2171,7 @@ CONTAINS
 
          it_delay = 20
 
-         if (mod(it,it_delay)==0) then
+         if (time .ge. part_inject_time .and. mod(it,it_delay)==0) then
 
             my_reintro = nprime*(1./60.)*(10.**6.)*dt*4/numprocs*real(it_delay) !4m^3 (vol chamber)
             tot_reintro = my_reintro*numprocs

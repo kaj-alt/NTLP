@@ -10761,7 +10761,7 @@ c
      +         radius_init,radius_std,kappas_init,kappas_std,
      +         dry_diam_mean_nm,dry_diam_gsd,part_init_rh,
      +         grav, t00,fcor,zo,zos,
-     +         vp_init,Tp_init,nprime
+     +         vp_init,Tp_init,nprime,part_inject_time
 
 
       !params.in contains namelists to read
@@ -10769,6 +10769,7 @@ c
       dry_diam_mean_nm = -1.0
       dry_diam_gsd = 0.0
       part_init_rh = 95.0
+      part_inject_time = 0.0
       ichamber_idealgas = 0
       call get_command_argument(1,params_dir)
       open(12,file=params_dir,status="old")
